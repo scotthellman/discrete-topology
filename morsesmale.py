@@ -3,11 +3,63 @@ import numpy as np
 import scipy
 import graph
 import itertools
+from collections import defaultdict
 
-#def find_filtration(G, pdist)
+def calculate_persistence(crystal, other, minimum_value, G, function_vals):
+    minimums = []
+    min_vertices = []
+    for vertex in crystal:
+        neighbors = G.neighbors(vertex)
+        value = function_vals[vertex]
+        worst_case = minimum_value - value
+        minimum_dist = None
+        minimum_node = None
+        for n in neighbors:
+            diff = minimum_value - function_vals[n]
+            if minimum_dist is None or diff > worst_case and diff < minimum_dist:
+                minimum_dist = diff
+                minimum_node = n
+        if minimum_dist < worst_case:
+            minimum_dist = worst_case
+            minimum_node = vertex
+        minimums.append(minimum_dist)
+        min_vertices.append(minimum_node)
+    chosen_index = np.argmin(minimums)
+    return minimums[chosen_index], min_vertices[chosen_index]
+
+def find_filtration(G, function_vals, msc):
+    #TODO: throw exception when 2 values are the same
+    # minkP(X) mines(pa,pk) maxxiekamin − xik.   
+    crystals = defaultdict(list)
+    for i,label in enumerate(msc):
+        crystals[label].append(i)
+    filtration = [crystals] 
+    while len(crystals) > 1:
+        #find the crystal with the smalled persistence
+        best_pair = None
+        best_persistence = None
+        for crystal in crystals:
+            print(crystal)
+            print(crystals)
+            minimum_val = function_vals[crystal[0]]
+            for other in crystals:
+                if other != crystal:
+                    persistence = calculate_persistence(crystals[crystal], crystals[other],
+                                                        minimum_val, G, function_vals)[0]
+                    if best_persistence is None or persistence < best_persistence:
+                        best_pair = (crystal, other)
+                        best_persistence = persistence
+        new_crystals = defaultdict(list)
+        for crystal,values in crystals.items():
+            if crystal != best_pair[0]:
+                new_crystals[crystal].extend(values)
+            else:
+                new_crystals[best_pair[1]].extend(values)
+        filtration.append(new_crystals)
+        crystals = new_crystals
+    return filtration
 
 def generate_morse_smale(G, pdist, function_vals):
-    #TODO: throw exception when 2 values are the same
     maxima, minima, ascent, descent = find_extrema(G, pdist, function_vals)
     max_labels = assign_extrema(G, maxima, ascent)
     min_labels = assign_extrema(G, minima, descent)
@@ -16,8 +68,6 @@ def generate_morse_smale(G, pdist, function_vals):
     
 def assign_extrema(G, extrema, path):
     assignments = [0] * len(G.nodes())
-    print(extrema)
-    print(path)
     for node in G:
         traverser = node
         while traverser not in extrema:
@@ -35,7 +85,7 @@ def find_extrema(G, pdist, function_vals):
         distances = np.array([d for n,d in enumerate(pdist[i]) if n in neighbors])
         differences = np.array([function_vals[n] - value for n in neighbors]).T[0]
         normalized = differences / distances
-        ordered = np.argsort(differences)
+        ordered = np.argsort(normalized)
         if np.all(differences < 0):
             maxima.append(i)
             ascent[i] = i
@@ -72,6 +122,10 @@ if __name__ == "__main__":
     
     maxs, mins, ascent, descent = find_extrema(G, pdist, func_vals)
     
-    print(assign_extrema(G, maxs, ascent))
-    print(generate_morse_smale(G, pdist, func_vals))
+    msc = generate_morse_smale(G, pdist, func_vals)
+    print(msc)
+    filtration = find_filtration(G, func_vals, msc)
+    print("-"*20)
+    for f in filtration:
+        print(f)
     
