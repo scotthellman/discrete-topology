@@ -2,10 +2,13 @@ import networkx as nx
 import numpy as np
 import scipy
 import graph
+import itertools
+
+#def find_filtration(G, pdist)
 
 def generate_morse_smale(G, pdist, function_vals):
     #TODO: throw exception when 2 values are the same
-    maxima, minima, ascent, descent = find_extrema(G, function_vals)
+    maxima, minima, ascent, descent = find_extrema(G, pdist, function_vals)
     max_labels = assign_extrema(G, maxima, ascent)
     min_labels = assign_extrema(G, minima, descent)
     
@@ -22,14 +25,16 @@ def assign_extrema(G, extrema, path):
         assignments[node] = traverser
     return assignments
     
-def find_extrema(G, function_vals):
+def find_extrema(G, pdist, function_vals):
     ascent = {}
     descent = {}
     maxima = []
     minima = []
     for i,value in enumerate(function_vals):
         neighbors = np.array(G.neighbors(i))
+        distances = np.array([d for n,d in enumerate(pdist[i]) if n in neighbors])
         differences = np.array([function_vals[n] - value for n in neighbors]).T[0]
+        normalized = differences / distances
         ordered = np.argsort(differences)
         if np.all(differences < 0):
             maxima.append(i)
@@ -65,7 +70,7 @@ if __name__ == "__main__":
     
     func_vals = values % 5
     
-    maxs, mins, ascent, descent = find_extrema(G, func_vals)
+    maxs, mins, ascent, descent = find_extrema(G, pdist, func_vals)
     
     print(assign_extrema(G, maxs, ascent))
     print(generate_morse_smale(G, pdist, func_vals))
