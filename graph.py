@@ -7,7 +7,6 @@ def generate_knn_graph(pdist, k):
     G = nx.Graph()
     for i,row in enumerate(pdist):
         nearest_neighbors = np.argsort(row)
-        print(i, nearest_neighbors)
         for neighbor in nearest_neighbors[1:k+1]:
             G.add_edge(i,neighbor)
     return G
