@@ -8,8 +8,11 @@ from collections import defaultdict
 def calculate_persistence(crystal, other, minimum_value, G, function_vals):
     minimums = []
     min_vertices = []
+    other = set(other)
     for vertex in crystal:
-        neighbors = G.neighbors(vertex)
+        neighbors = set(G.neighbors(vertex)) & other
+        if len(neighbors) == 0:
+            continue
         value = function_vals[vertex]
         worst_case = minimum_value - value
         minimum_dist = None
@@ -24,8 +27,11 @@ def calculate_persistence(crystal, other, minimum_value, G, function_vals):
             minimum_node = vertex
         minimums.append(minimum_dist)
         min_vertices.append(minimum_node)
-    chosen_index = np.argmin(minimums)
-    return minimums[chosen_index], min_vertices[chosen_index]
+    try:
+        chosen_index = np.argmin(minimums)
+        return minimums[chosen_index], min_vertices[chosen_index]
+    except ValueError:
+        return float("inf"), None
 
 def find_filtrations(G, function_vals, msc):
     #TODO: throw exception when 2 values are the same
@@ -81,7 +87,7 @@ def find_extrema(G, pdist, function_vals):
     for i,value in enumerate(function_vals):
         neighbors = np.array(G.neighbors(i))
         distances = np.array([d for n,d in enumerate(pdist[i]) if n in neighbors])
-        differences = np.array([function_vals[n] - value for n in neighbors]).T[0]
+        differences = np.array([function_vals[n] - value for n in neighbors])
         normalized = differences / distances
         ordered = np.argsort(normalized)
         if np.all(differences < 0):
