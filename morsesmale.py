@@ -27,7 +27,7 @@ def calculate_persistence(crystal, other, minimum_value, G, function_vals):
     chosen_index = np.argmin(minimums)
     return minimums[chosen_index], min_vertices[chosen_index]
 
-def find_filtration(G, function_vals, msc):
+def find_filtrations(G, function_vals, msc):
     #TODO: throw exception when 2 values are the same
     # minkP(X) mines(pa,pk) maxxiekamin − xik.   
     crystals = defaultdict(list)
@@ -39,8 +39,6 @@ def find_filtration(G, function_vals, msc):
         best_pair = None
         best_persistence = None
         for crystal in crystals:
-            print(crystal)
-            print(crystals)
             minimum_val = function_vals[crystal[0]]
             for other in crystals:
                 if other != crystal:
@@ -107,7 +105,7 @@ def get_filtrations(pdist, function_vals, k=2):
         G = graph.generate_knn_graph(pdist, k)
     
     msc = generate_morse_smale(G, pdist, function_vals)
-    filtrations = generate_filtrations(msc, G, function_vals)
+    filtrations = find_filtrations(G, function_vals, msc)
     
     return filtrations
     
@@ -124,8 +122,10 @@ if __name__ == "__main__":
     
     msc = generate_morse_smale(G, pdist, func_vals)
     print(msc)
-    filtration = find_filtration(G, func_vals, msc)
+    filtration = find_filtrations(G, func_vals, msc)
     print("-"*20)
     for f in filtration:
         print(f)
+        
+    get_filtrations(pdist, func_vals)
     
