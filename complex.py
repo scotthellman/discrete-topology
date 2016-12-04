@@ -15,22 +15,28 @@ class SimplexTree:
             subnodes = nodes[i:]
             parent = self.root
             for j,node in enumerate(subnodes):
-                #i+j is depth
+                #j is depth
                 current = parent.children
                 if node not in current:
-                    current[node] = SimplexTreeNode(node, parent, i+j)
-                self.sibling_tree[i+j][node].append(current[node])
+                    current[node] = SimplexTreeNode(node, parent, j)
+                self.sibling_tree[j][node].append(current[node])
                 parent = current[node]   
                 if i+j > self.depth:
-                    self.depth = i+j
+                    self.depth = j
                     
+    def _remove_from_sibling_tree(self, node):
+        for child in node.children.values():
+            self._remove_from_sibling_tree(child)
+        self.sibling_tree[node.dimension][node.name].remove(node)  
+        
     def delete_simplex(self, simplex):
-        #TODO: this desynchs the sibling tree
         node = self.find_node(simplex)
         cofaces = self.find_cofaces(simplex)
         
+        self._remove_from_sibling_tree(node)
         node.parent.remove_child(node.name)
         for coface in cofaces:
+            self._remove_from_sibling_tree(coface)
             coface.parent.remove_child(coface.name)
         
                 
@@ -86,9 +92,20 @@ if __name__ == "__main__":
     tree = SimplexTree()
     tree.add_simplex(simplices[0])
     tree.add_simplex(simplices[1])
-    print(tree.root)
-    print(tree.find_node([1,2,3]))
-    print("-")
-    print(tree.find_cofaces([3,4]))
-    tree.delete_simplex([3])
-    print(tree.root)
+    #print(tree.root)
+    #print(tree.sibling_tree)
+    #print(tree.find_node([1,2,3]))
+    #print("-")
+    #print(tree.find_cofaces([3,4]))
+    for i in range(4):
+        siblings = tree.sibling_tree[i]
+        for name in siblings:
+            print(i, name, len(siblings[name]))
+    tree.delete_simplex([3,4])
+    print("---")
+    #print(tree.root)
+    #print(tree.sibling_tree)
+    for i in range(4):
+        siblings = tree.sibling_tree[i]
+        for name in siblings:
+            print(i, name, len(siblings[name]))
