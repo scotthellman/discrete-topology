@@ -23,6 +23,16 @@ class SimplexTree:
                 parent = current[node]   
                 if i+j > self.depth:
                     self.depth = i+j
+                    
+    def delete_simplex(self, simplex):
+        #TODO: this desynchs the sibling tree
+        node = self.find_node(simplex)
+        cofaces = self.find_cofaces(simplex)
+        
+        node.parent.remove_child(node.name)
+        for coface in cofaces:
+            coface.parent.remove_child(coface.name)
+        
                 
     def find_node(self, simplex):
         current = self.root
@@ -66,6 +76,9 @@ class SimplexTreeNode:
             path.append(current)
             current = current.parent
         return path
+        
+    def remove_child(self, name):
+        del self.children[name]
 
 if __name__ == "__main__":
     simplices = [[1,2,3,4],[3,4,5]]
@@ -77,3 +90,5 @@ if __name__ == "__main__":
     print(tree.find_node([1,2,3]))
     print("-")
     print(tree.find_cofaces([3,4]))
+    tree.delete_simplex([3])
+    print(tree.root)
