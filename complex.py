@@ -11,20 +11,22 @@ class SimplexTree:
         
     def add_simplex(self, nodes):
         nodes = sorted(nodes)
+        
+        #TODO: this is busted
+        #we only update the leftmost branch
+        parent = self.root  
+      
         for i in range(len(nodes)):
             subnodes = nodes[i:]
-            parent = self.root
-            for j,node in enumerate(subnodes):
-                #j is depth
-                current = parent.children
-                if node not in current:
-                    print("adding {} to {}".format(node, parent))
-                    current[node] = SimplexTreeNode(node, parent, j)
-                    print(parent)
-                self.sibling_tree[j][node].append(current[node])
-                parent = current[node]   
-                if i+j > self.depth:
-                    self.depth = j
+            print("{}, adding {}".format(parent, subnodes))
+
+            parent.add_children(subnodes)
+            for node in subnodes:
+                self.sibling_tree[i][node] = parent.children[node]
+            parent = parent.children[nodes[i]]
+        
+        if self.depth < len(nodes):
+            self.depth = len(nodes)
                     
     def _remove_from_sibling_tree(self, node):
         for child in node.children.values():
@@ -110,6 +112,14 @@ class SimplexTreeNode:
             path.append(current)
             current = current.parent
         return path
+
+    def add_children(self, names):
+        for name in names:
+            self.add_child(name)
+    
+    def add_child(self, name):
+        if name not in self.children:
+            self.children[name] = SimplexTreeNode(name, self, self.dimension+1)
         
     def remove_child(self, name):
         del self.children[name]
@@ -121,7 +131,7 @@ class SimplexTreeNode:
             return "root"
     def pretty(self):
         path = self.path_to_root()
-        return "-".join([str(p) for p in path])
+        return "-".join([str(p.name) for p in path])
 
 if __name__ == "__main__":
     simplices = [[1,2,3,4],[3,4,5]]
@@ -148,3 +158,4 @@ if __name__ == "__main__":
     #        print(i, name, len(siblings[name]))
     facets = tree.find_facets([3,4,5])
     print([f.pretty() for f in facets])
+    print(tree.find_simplex([4,5]))
