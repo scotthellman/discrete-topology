@@ -18,7 +18,9 @@ class SimplexTree:
                 #j is depth
                 current = parent.children
                 if node not in current:
+                    print("adding {} to {}".format(node, parent))
                     current[node] = SimplexTreeNode(node, parent, j)
+                    print(parent)
                 self.sibling_tree[j][node].append(current[node])
                 parent = current[node]   
                 if i+j > self.depth:
@@ -30,7 +32,7 @@ class SimplexTree:
         self.sibling_tree[node.dimension][node.name].remove(node)  
         
     def delete_simplex(self, simplex):
-        node = self.find_node(simplex)
+        node = self.find_simplex(simplex)
         cofaces = self.find_cofaces(simplex)
         
         self._remove_from_sibling_tree(node)
@@ -38,19 +40,16 @@ class SimplexTree:
         for coface in cofaces:
             self._remove_from_sibling_tree(coface)
             coface.parent.remove_child(coface.name)
-        
-                
-    def find_node(self, simplex):
-        current = self.root
-        for node in simplex:
-            current = current.children[node]
-        return current
+            
+    #TODO: at least some of thse should be in SimplexTreeNode               
+    def find_simplex(self, simplex):
+        return self.root.find_simplex(simplex)
     
     def find_cofaces(self, simplex):
         #find all simplices that have the same final vertex
         #nb this doesn't actually return ALL cofaces - things of larger dim
         #may just be implied
-        final_node = self.find_node(simplex)
+        final_node = self.find_simplex(simplex)
         cofaces = []
         for dim in range(final_node.dimension, self.depth + 1):
             siblings = self.sibling_tree[dim][final_node.name]
@@ -62,6 +61,29 @@ class SimplexTree:
                 if all([s in names for s in simplex]):
                     cofaces.append(sibling)
         return cofaces
+        
+    def find_facets(self, simplex):
+        #TODO: figure out why we need this, i don't think
+        #i'm understanding the terminology correctly
+        #also this is really pointing out that i need to do something about
+        #equality testing for nodes
+        facets = []
+        node = self.find_simplex(simplex)
+        path = node.path_to_root()
+        remaining = []
+        for child,parent in zip(path,path[1:]):
+            print(parent.name,remaining)
+            print(parent.children)
+            print(5 in parent.children)
+            facet = parent.find_simplex(remaining)
+            print(facet)
+            if facet is not None:
+                print("hit")
+                facets.append(facet)
+            print("-"*20)
+            remaining.append(child.name)
+        return facets
+
 
 
 class SimplexTreeNode:
@@ -72,8 +94,14 @@ class SimplexTreeNode:
         self.dimension = dim
         self.children = {}
         
-    def __str__(self):
-        return "{}: {}".format(self.name, [str(c) for c in self.children.values()])
+    def find_simplex(self, simplex):
+        current = self
+        try:
+            for node in simplex:
+                current = current.children[node]
+            return current
+        except KeyError:
+            return None
         
     def path_to_root(self):
         path = []
@@ -85,27 +113,38 @@ class SimplexTreeNode:
         
     def remove_child(self, name):
         del self.children[name]
+    
+    def __str__(self):
+        try:
+            return "{}^{} : {}".format(self.name, self.dimension, len(self.children))
+        except AttributeError:
+            return "root"
+    def pretty(self):
+        path = self.path_to_root()
+        return "-".join([str(p) for p in path])
 
 if __name__ == "__main__":
     simplices = [[1,2,3,4],[3,4,5]]
     
     tree = SimplexTree()
-    tree.add_simplex(simplices[0])
+    #tree.add_simplex(simplices[0])
     tree.add_simplex(simplices[1])
     #print(tree.root)
     #print(tree.sibling_tree)
-    #print(tree.find_node([1,2,3]))
+    #print(tree.find_simplex([1,2,3]))
     #print("-")
     #print(tree.find_cofaces([3,4]))
-    for i in range(4):
-        siblings = tree.sibling_tree[i]
-        for name in siblings:
-            print(i, name, len(siblings[name]))
-    tree.delete_simplex([3,4])
-    print("---")
+    #for i in range(4):
+    #    siblings = tree.sibling_tree[i]
+    #    for name in siblings:
+    #        print(i, name, len(siblings[name]))
+    #tree.delete_simplex([3,4])
+    #print("---")
     #print(tree.root)
     #print(tree.sibling_tree)
-    for i in range(4):
-        siblings = tree.sibling_tree[i]
-        for name in siblings:
-            print(i, name, len(siblings[name]))
+    #for i in range(4):
+    #    siblings = tree.sibling_tree[i]
+    #    for name in siblings:
+    #        print(i, name, len(siblings[name]))
+    facets = tree.find_facets([3,4,5])
+    print([f.pretty() for f in facets])
