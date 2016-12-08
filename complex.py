@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
+from asciitree import LeftAligned
 
 
 class SimplexTree:
@@ -131,6 +132,13 @@ class SimplexTreeNode:
     def pretty(self):
         path = self.path_to_root()
         return "-".join([str(p.name) for p in path])
+        
+    def to_dictionary(self):
+        child_dictionary = {c.name : c.to_dictionary() for c in self.children.values()}
+
+        if self.parent is None:
+            return {self.name : child_dictionary}
+        return child_dictionary#{self.name : child_dictionary}
 
 if __name__ == "__main__":
     simplices = [[1,2,3,4],[3,4,5]]
@@ -138,6 +146,7 @@ if __name__ == "__main__":
     tree = SimplexTree()
     #tree.add_simplex(simplices[0])
     tree.add_simplex(simplices[1])
+    #tree.add_simplex([1])
     #print(tree.root)
     #print(tree.sibling_tree)
     #print(tree.find_simplex([1,2,3]))
@@ -155,6 +164,10 @@ if __name__ == "__main__":
     #    siblings = tree.sibling_tree[i]
     #    for name in siblings:
     #        print(i, name, len(siblings[name]))
-    facets = tree.find_facets([3,4,5])
-    print([f.pretty() for f in facets])
-    print(tree.find_simplex([4,5]))
+    #facets = tree.find_facets([3,4,5])
+    #print([f.pretty() for f in facets])
+    #print(tree.find_simplex([4,5]))
+    
+    print(LeftAligned()(tree.root.to_dictionary()))
+    #print(tree.root.to_dictionary())
+    print(tree.root.to_dictionary())
