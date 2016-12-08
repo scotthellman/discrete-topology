@@ -15,16 +15,18 @@ class SimplexTree:
         #TODO: this is busted
         #we only update the leftmost branch
         parent = self.root  
-      
-        for i in range(len(nodes)):
-            subnodes = nodes[i:]
-            print("{}, adding {}".format(parent, subnodes))
-
+        
+        to_add = []
+        to_add.append((self.root, 0))
+        
+        while to_add:
+            parent, depth = to_add.pop()
+            subnodes = nodes[depth:]
             parent.add_children(subnodes)
             for node in subnodes:
-                self.sibling_tree[i][node] = parent.children[node]
-            parent = parent.children[nodes[i]]
-        
+                to_add.append((parent.children[node], depth + 1))
+                self.sibling_tree[depth][node] = parent.children[node]
+      
         if self.depth < len(nodes):
             self.depth = len(nodes)
                     
@@ -74,15 +76,9 @@ class SimplexTree:
         path = node.path_to_root()
         remaining = []
         for child,parent in zip(path,path[1:]):
-            print(parent.name,remaining)
-            print(parent.children)
-            print(5 in parent.children)
             facet = parent.find_simplex(remaining)
-            print(facet)
             if facet is not None:
-                print("hit")
                 facets.append(facet)
-            print("-"*20)
             remaining.append(child.name)
         return facets
 
@@ -112,6 +108,9 @@ class SimplexTreeNode:
             path.append(current)
             current = current.parent
         return path
+        
+    def get_children(self):
+        return list(self.children.values())
 
     def add_children(self, names):
         for name in names:
