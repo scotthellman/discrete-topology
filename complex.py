@@ -12,9 +12,6 @@ class SimplexTree:
         
     def add_simplex(self, nodes):
         nodes = sorted(nodes)
-        
-        #TODO: this is busted
-        #we only update the leftmost branch
         parent = self.root  
         
         to_add = []
@@ -24,8 +21,8 @@ class SimplexTree:
             parent, depth = to_add.pop()
             subnodes = nodes[depth:]
             parent.add_children(subnodes)
-            for node in subnodes:
-                to_add.append((parent.children[node], depth + 1))
+            for i,node in enumerate(subnodes):
+                to_add.append((parent.children[node], depth + 1 + i))
                 self.sibling_tree[depth][node] = parent.children[node]
       
         if self.depth < len(nodes):
